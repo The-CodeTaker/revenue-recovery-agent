@@ -1,0 +1,9 @@
+
+Flask==3.0.3
+Flask-Limiter==3.8.0
+Flask-WTF==1.2.1
+python-dotenv==1.0.1
+requests==2.32.2
+pandas>=2.3.3
+pytest==8.2.0
+indic-transliteration==2.3.82

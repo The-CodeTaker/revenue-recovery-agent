@@ -1,0 +1,21 @@
+# Python Environment
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Security (Crucial!)
+.env
+
+# Large binaries, models, and generated audio
+audio/generated/*.wav
+bin/piper/
+models/*.onnx
+models/*.onnx.json
+
+# Generated simulation results and logs
+results/*.jsonl
+results/*.json
+
+# Generated datasets (Judges will generate their own via the README steps)
+data/*.csv

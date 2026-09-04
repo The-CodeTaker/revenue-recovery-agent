@@ -1,0 +1,185 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Revenue Recovery Agent</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <header>
+        <div class="logo">🚀 Razorpay AI Buildathon</div>
+        <h1>Revenue Recovery Agent</h1>
+        <div class="status-badge">Engine Active</div>
+    </header>
+
+    <main class="dashboard-grid">
+        <!-- Left Column: Metrics -->
+        <section class="panel metrics-panel">
+            <div class="panel-header">
+                <h2>Portfolio Metrics (Batch Run)</h2>
+                <div class="toggle-container">
+                    <span class="toggle-label" id="naiveLabel">Naive Retry</span>
+                    <label class="switch">
+                        <input type="checkbox" id="engineToggle" checked>
+                        <span class="slider round"></span>
+                    </label>
+                    <span class="toggle-label active" id="engineLabel">AI Engine</span>
+                </div>
+            </div>
+            
+            <div class="stats-row">
+                <div class="stat-card">
+                    <h3>Total Failed Revenue</h3>
+                    <p id="stat-failed">₹0.00</p>
+                </div>
+                <div class="stat-card" id="card-2">
+                    <h3 id="stat-title-2">Recovery Rate</h3>
+                    <p id="stat-naive">0.0%</p>
+                </div>
+                <div class="stat-card highlight" id="card-3">
+                    <h3 id="stat-title-3">Expected Recovery</h3>
+                    <p id="stat-engine">₹0.00</p>
+                </div>
+                <div class="stat-card success" id="card-4">
+                    <h3 id="stat-title-4">Improvement</h3>
+                    <p id="stat-improvement">0%</p>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <canvas id="recoveryChart"></canvas>
+            </div>
+        </section>
+
+        <!-- Right Column: Live Simulation -->
+        <section class="panel simulation-panel">
+            <h2>Live Journey Simulation</h2>
+            <div class="sim-controls">
+                <input type="text" id="customerIdInput" placeholder="e.g. CUST-000004" value="CUST-000004">
+                <button id="simulateBtn">Simulate Journey</button>
+            </div>
+
+            <div id="loading" class="hidden">Running pipeline (Classifier ➔ Retry Engine ➔ Stopping Rules ➔ AI Agent)...</div>
+            <div id="errorBox" class="hidden error-box"></div>
+
+            <div id="journeyTimeline" class="hidden timeline">
+                <!-- Step 1: Classification -->
+                <div class="timeline-item">
+                    <div class="timeline-icon">🔍</div>
+                    <div class="timeline-content">
+                        <h3>1. Failure Classification</h3>
+                        <p><strong>Reason:</strong> <span id="out-classified"></span></p>
+                        <p><strong>Confidence:</strong> <span id="out-confidence"></span></p>
+                    </div>
+                </div>
+
+                <!-- Step 2: Retry Engine -->
+                <div class="timeline-item">
+                    <div class="timeline-icon">⚙️</div>
+                    <div class="timeline-content">
+                        <h3>2. Engine Decision</h3>
+                        <p><strong>Action:</strong> <span id="out-action"></span></p>
+                        <p><strong>Reasoning:</strong> <span id="out-reasoning"></span></p>
+                    </div>
+                </div>
+
+                <!-- Step 3: Stopping Rules -->
+                <div class="timeline-item">
+                    <div class="timeline-icon">🛡️</div>
+                    <div class="timeline-content">
+                        <h3>3. Global Safeguards</h3>
+                        <p><strong>Allowed:</strong> <span id="out-allowed"></span></p>
+                        <p><strong>Block Reason:</strong> <span id="out-block-reason"></span></p>
+                    </div>
+                </div>
+
+                <!-- Step 4: AI Agent & Voice -->
+                <div class="timeline-item highlight-item">
+                    <div class="timeline-icon">🤖</div>
+                    <div class="timeline-content">
+                        <h3>4. Hinglish Agent (Stage: <span id="out-stage"></span>)</h3>
+                        <div class="message-box" id="out-message"></div>
+                        
+                        <div id="audio-container" class="hidden audio-box">
+                            <p><strong>Generated Voice:</strong></p>
+                            <audio id="audioPlayer" controls></audio>
+                            <p class="file-path">File: <span id="out-audio-path"></span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+<section class="panel unresolved-panel">
+    <div class="panel-header">
+        <h2>Unresolved / Not Retried</h2>
+        <span id="unresolved-count" class="status-badge" style="background: var(--danger);">0 records</span>
+    </div>
+
+    <div id="unresolved-loading" class="hidden">Loading unresolved records...</div>
+    <div id="unresolved-error" class="hidden error-box"></div>
+
+    <div class="table-scroll">
+        <table id="unresolved-table">
+            <thead>
+                <tr>
+                    <th>Customer ID</th>
+                    <th>Amount</th>
+                    <th>Failure Reason</th>
+                    <th>Reason Tag</th>
+                    <th>Proposed Action</th>
+                    <th>Detail</th>
+                </tr>
+            </thead>
+            <tbody id="unresolved-tbody">
+                <!-- populated by JS -->
+            </tbody>
+        </table>
+    </div>
+</section>
+    <section class="panel audit-panel">
+        <div class="panel-header">
+            <h2>Audit Trail</h2>
+            <span id="audit-count" class="status-badge">0 entries shown</span>
+        </div>
+        <p class="audit-subtitle">Every processed record's full decision journey -- classification, proposed action, stopping-rules check, final action, and message sent -- persisted to <code>results/audit_trail.jsonl</code>.</p>
+
+        <div class="sim-controls">
+            <input type="text" id="auditSearchInput" placeholder="Search by customer_id (blank = most recent)">
+            <button id="auditSearchBtn">Search</button>
+        </div>
+
+        <div id="audit-loading" class="hidden">Searching audit trail...</div>
+        <div id="audit-error" class="hidden error-box"></div>
+
+        <div class="table-scroll">
+            <table id="audit-table">
+                <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>Source</th>
+                        <th>Customer ID</th>
+                        <th>Classified Reason</th>
+                        <th>Proposed Action</th>
+                        <th>Stopping Rules</th>
+                        <th>Effective Action</th>
+                        <th>Message Sent</th>
+                    </tr>
+                </thead>
+                <tbody id="audit-tbody">
+                    <!-- populated by JS -->
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <script src="/static/chart.js"></script>
+    <script src="/static/player.js"></script>
+    <script src="/static/audit.js"></script>
+</body>
+</html>
+
