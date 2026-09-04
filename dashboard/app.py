@@ -45,6 +45,7 @@ from core.retry_engine import RetryEngine
 from core.stopping_rules import StoppingRules
 from messaging.hinglish_agent import HinglishAgent
 from messaging.templates import escalation_stage_for_attempts, render_message
+from messaging.transliteration import to_devanagari_for_voice
 from messaging.voice_agent import VoiceAgent
 
 load_dotenv()
@@ -219,8 +220,9 @@ def api_simulate():
         message_source = "template_fallback" if hinglish_message == fallback_text else "ollama_llm"
 
         if is_allowed:
+            voice_text = to_devanagari_for_voice(hinglish_message)
             voice_filepath = _voice_agent.generate_voice_message(
-                text=hinglish_message, customer_id=customer_id
+                text=voice_text, customer_id=customer_id
             )
 
     audit_entry = build_audit_entry(
